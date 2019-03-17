@@ -153,11 +153,11 @@ def categorical_dqn_mnist_env():
     # config.replay_fn = lambda: AsyncReplay(memory_size=10000, batch_size=10)
     
     config.discount = 0.8
-    config.target_network_update_freq = 200
+    config.target_network_update_freq = 20
     config.exploration_steps = 100
-    config.categorical_v_max = 100
-    config.categorical_v_min = -100
-    config.categorical_n_atoms = 50
+    config.categorical_v_max = 0.9
+    config.categorical_v_min = -2.0
+    config.categorical_n_atoms = 5
     config.gradient_clip = 5
     config.sgd_update_frequency = 4
     
@@ -513,6 +513,5 @@ if __name__ == '__main__':
     # a2c_mnist_env()
     # ppo_mnist_env()
     categorical_dqn_mnist_env()
-    # dqn_cart_pole()
 
     # plot()
