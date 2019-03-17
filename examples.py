@@ -17,8 +17,8 @@ def dqn_cart_pole():
     config.network_fn = lambda: VanillaNet(config.action_dim, FCBody(config.state_dim))
     # config.network_fn = lambda: DuelingNet(config.action_dim, FCBody(config.state_dim))
 
-    # config.replay_fn = lambda: Replay(memory_size=int(1e4), batch_size=10)
-    config.replay_fn = lambda: AsyncReplay(memory_size=int(1e4), batch_size=10)
+    config.replay_fn = lambda: Replay(memory_size=int(1e4), batch_size=10)
+    # config.replay_fn = lambda: AsyncReplay(memory_size=int(1e4), batch_size=10)
 
     config.random_action_prob = LinearSchedule(1.0, 0.1, 1e4)
     config.discount = 0.99
@@ -30,7 +30,7 @@ def dqn_cart_pole():
     config.gradient_clip = 5
     config.eval_interval = int(5e3)
     config.max_steps = 1e5
-    # config.async_actor = False
+    config.async_actor = False
     config.logger = get_logger()
     run_steps(DQNAgent(config))
 
@@ -139,6 +139,34 @@ def categorical_dqn_cart_pole():
     config.max_steps = 1e5
     config.logger = get_logger()
     run_steps(CategoricalDQNAgent(config))
+    
+def categorical_dqn_mnist_env():
+    game = 'MNISTEnv'
+    config = Config()
+    log_dir = get_default_log_dir(categorical_dqn_mnist_env.__name__)
+    config.task_fn = lambda: Task(game, log_dir=log_dir)
+    config.eval_env = Task(game, log_dir=log_dir, type='test')
+    config.optimizer_fn = lambda params: torch.optim.Adam(params)
+    config.network_fn = lambda: CategoricalNet(config.action_dim, config.categorical_n_atoms, MNISTBody())
+    config.random_action_prob = LinearSchedule(1.0, 0.1, 1e4)
+    config.replay_fn = lambda: Replay(memory_size=10000, batch_size=10)
+    # config.replay_fn = lambda: AsyncReplay(memory_size=10000, batch_size=10)
+    
+    config.discount = 0.8
+    config.target_network_update_freq = 200
+    config.exploration_steps = 100
+    config.categorical_v_max = 100
+    config.categorical_v_min = -100
+    config.categorical_n_atoms = 50
+    config.gradient_clip = 5
+    config.sgd_update_frequency = 4
+    
+    config.async_actor = False
+
+    config.eval_interval = int(5e3)
+    config.max_steps = 1e5
+    config.logger = get_logger(tag=categorical_dqn_mnist_env.__name__)
+    run_steps(CategoricalDQNAgent(config))
 
 def categorical_dqn_pixel_atari(name):
     config = Config()
@@ -181,8 +209,27 @@ def a2c_cart_pole():
     config.use_gae = True
     config.gae_tau = 0.95
     config.entropy_weight = 0.01
-    config.rollout_length = 5
+    config.rollout_length = 128
     config.gradient_clip = 0.5
+    run_steps(A2CAgent(config))
+    
+def a2c_mnist_env():
+    game = 'MNISTEnv'
+    config = Config()
+    config.num_workers = 5
+    config.task_fn = lambda: Task(game, num_envs=config.num_workers)
+    config.eval_env = Task(game, type='test')
+    config.optimizer_fn = lambda params: torch.optim.Adam(params)
+    config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
+    config.discount = 0.8
+    config.use_gae = False
+    config.gae_tau = 0.95
+    config.entropy_weight = 0.01
+    config.rollout_length = 16
+    config.log_interval = 128 * 5 * 10
+    config.max_steps = int(1e5)
+    config.gradient_clip = 5
+    config.logger = get_logger(ppo_mnist_env.__name__)
     run_steps(A2CAgent(config))
 
 def a2c_pixel_atari(name):
@@ -325,6 +372,28 @@ def ppo_cart_pole():
     config.log_interval = 128 * 5 * 10
     config.logger = get_logger(ppo_cart_pole.__name__)
     run_steps(PPOAgent(config))
+    
+def ppo_mnist_env():
+    game = 'MNISTEnv'
+    config = Config()
+    config.num_workers = 5
+    config.task_fn = lambda: Task(game, num_envs=config.num_workers)
+    config.eval_env = Task(game, type='test')
+    config.optimizer_fn = lambda params: torch.optim.Adam(params)
+    config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
+    config.discount = 0.8
+    config.use_gae = False
+    config.gae_tau = 0.95
+    config.entropy_weight = 0.01
+    config.gradient_clip = 5
+    config.rollout_length = 16
+    config.optimization_epochs = 10
+    config.mini_batch_size = 32 * 5
+    config.ppo_ratio_clip = 0.2
+    config.log_interval = 128 * 5 * 10
+    config.max_steps = int(1e5)
+    config.logger = get_logger(ppo_mnist_env.__name__)
+    run_steps(PPOAgent(config))
 
 def ppo_pixel_atari(name):
     config = Config()
@@ -369,7 +438,7 @@ def ppo_continuous(name):
     config.mini_batch_size = 64
     config.ppo_ratio_clip = 0.2
     config.log_interval = 2048
-    config.max_steps = 1e6
+    config.max_steps = 1e5
     config.state_normalizer = MeanStdNormalizer()
     config.logger = get_logger()
     run_steps(PPOAgent(config))
@@ -438,27 +507,12 @@ if __name__ == '__main__':
     mkdir('tf_log')
     set_one_thread()
     random_seed()
-    select_device(-1)
-    # select_device(0)
+    # select_device(-1)
+    select_device(0)
 
+    # a2c_mnist_env()
+    # ppo_mnist_env()
+    categorical_dqn_mnist_env()
     # dqn_cart_pole()
-    # quantile_regression_dqn_cart_pole()
-    # categorical_dqn_cart_pole()
-    # a2c_cart_pole()
-    # a2c_continuous('HalfCheetah-v2')
-    # n_step_dqn_cart_pole()
-    # option_critic_cart_pole()
-    # ppo_cart_pole()
-    # ppo_continuous('HalfCheetah-v2')
-    # ddpg_continuous('HalfCheetah-v2')
-
-    # game = 'BreakoutNoFrameskip-v4'
-    # dqn_pixel_atari(game)
-    # quantile_regression_dqn_pixel_atari(game)
-    # categorical_dqn_pixel_atari(game)
-    # a2c_pixel_atari(game)
-    # n_step_dqn_pixel_atari(game)
-    # option_ciritc_pixel_atari(game)
-    # ppo_pixel_atari(game)
 
     # plot()

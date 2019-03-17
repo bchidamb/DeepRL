@@ -15,19 +15,23 @@ from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv, VecEnv
 
 from ..utils import *
 
+from .mnist_env import MNISTEnv
+
 try:
     import roboschool
 except ImportError:
     pass
 
 # adapted from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr/blob/master/envs.py
-def make_env(env_id, seed, rank, log_dir, episode_life=True):
+def make_env(env_id, seed, rank, log_dir, episode_life=True, type=None):
     def _thunk():
         random_seed(seed)
         if env_id.startswith("dm"):
             import dm_control2gym
             _, domain, task = env_id.split('-')
             env = dm_control2gym.make(domain_name=domain, task_name=task)
+        elif env_id == "MNISTEnv":
+            env = MNISTEnv(type=type, seed=seed)
         else:
             env = gym.make(env_id)
         is_atari = hasattr(gym.envs, 'atari') and isinstance(
@@ -171,10 +175,11 @@ class Task:
                  single_process=True,
                  log_dir=None,
                  episode_life=True,
-                 seed=np.random.randint(int(1e5))):
+                 seed=np.random.randint(int(1e5)),
+                 type='train'):
         if log_dir is not None:
             mkdir(log_dir)
-        envs = [make_env(name, seed, i, log_dir, episode_life) for i in range(num_envs)]
+        envs = [make_env(name, seed, i, log_dir, episode_life, type=type) for i in range(num_envs)]
         if single_process:
             Wrapper = DummyVecEnv
         else:

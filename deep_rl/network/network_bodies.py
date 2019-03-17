@@ -83,7 +83,38 @@ class DummyBody(nn.Module):
     def forward(self, x):
         return x
 
-
-
-
-
+class MNISTBody(nn.Module):
+    '''
+    A CNN with ReLU activations.
+    
+    Input shape:    (batch_size, 28, 28)
+    Output shape:   (batch_size, 50)
+    '''
+    
+    def __init__(self):
+        
+        super(MNISTBody, self).__init__()
+        
+        same_padding = (5 - 1) // 2
+        
+        self.conv1 = nn.Conv2d(1, 10, 5, padding=same_padding)
+        self.conv2 = nn.Conv2d(10, 10, 5, padding=same_padding)
+        self.lin1  = nn.Linear(10 * 7 * 7, 50)
+        self.feature_dim = 50
+    
+    def forward(self, x):
+    
+        x = x[:, None, :, :]
+    
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = nn.MaxPool2d(2)(x)
+        
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = nn.MaxPool2d(2)(x)
+        
+        x = x.view(-1, 10 * 7 * 7)
+        x = self.lin1(x)
+        
+        return x
