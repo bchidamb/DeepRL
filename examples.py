@@ -139,7 +139,7 @@ def categorical_dqn_cart_pole():
     config.max_steps = 1e5
     config.logger = get_logger()
     run_steps(CategoricalDQNAgent(config))
-    
+
 def categorical_dqn_mnist_env():
     game = 'MNISTEnv'
     config = Config()
@@ -151,7 +151,7 @@ def categorical_dqn_mnist_env():
     config.random_action_prob = LinearSchedule(1.0, 0.1, 1e4)
     config.replay_fn = lambda: Replay(memory_size=10000, batch_size=10)
     # config.replay_fn = lambda: AsyncReplay(memory_size=10000, batch_size=10)
-    
+
     config.discount = 0.8
     config.target_network_update_freq = 20
     config.exploration_steps = 100
@@ -160,7 +160,7 @@ def categorical_dqn_mnist_env():
     config.categorical_n_atoms = 5
     config.gradient_clip = 5
     config.sgd_update_frequency = 4
-    
+
     config.async_actor = False
 
     config.eval_interval = int(5e3)
@@ -212,12 +212,13 @@ def a2c_cart_pole():
     config.rollout_length = 128
     config.gradient_clip = 0.5
     run_steps(A2CAgent(config))
-    
+
 def a2c_mnist_env():
     game = 'MNISTEnv'
     config = Config()
+    log_dir = get_default_log_dir(a2c_mnist_env.__name__)
     config.num_workers = 5
-    config.task_fn = lambda: Task(game, num_envs=config.num_workers)
+    config.task_fn = lambda: Task(game, num_envs=config.num_workers, log_dir=log_dir)
     config.eval_env = Task(game, type='test')
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
     config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
@@ -229,7 +230,7 @@ def a2c_mnist_env():
     config.log_interval = 128 * 5 * 10
     config.max_steps = int(1e5)
     config.gradient_clip = 5
-    config.logger = get_logger(ppo_mnist_env.__name__)
+    config.logger = get_logger(tag=a2c_mnist_env.__name__)
     run_steps(A2CAgent(config))
 
 def a2c_pixel_atari(name):
@@ -370,14 +371,15 @@ def ppo_cart_pole():
     config.mini_batch_size = 32 * 5
     config.ppo_ratio_clip = 0.2
     config.log_interval = 128 * 5 * 10
-    config.logger = get_logger(ppo_cart_pole.__name__)
+    config.logger = get_logger(tag=ppo_cart_pole.__name__)
     run_steps(PPOAgent(config))
-    
+
 def ppo_mnist_env():
     game = 'MNISTEnv'
     config = Config()
+    log_dir = get_default_log_dir(ppo_mnist_env.__name__)
     config.num_workers = 5
-    config.task_fn = lambda: Task(game, num_envs=config.num_workers)
+    config.task_fn = lambda: Task(game, num_envs=config.num_workers, log_dir=log_dir)
     config.eval_env = Task(game, type='test')
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
     config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
@@ -391,8 +393,8 @@ def ppo_mnist_env():
     config.mini_batch_size = 32 * 5
     config.ppo_ratio_clip = 0.2
     config.log_interval = 128 * 5 * 10
-    config.max_steps = int(1e5)
-    config.logger = get_logger(ppo_mnist_env.__name__)
+    config.max_steps = int(1e6)
+    config.logger = get_logger(tag=ppo_mnist_env.__name__)
     run_steps(PPOAgent(config))
 
 def ppo_pixel_atari(name):
@@ -474,33 +476,35 @@ def plot():
     import matplotlib.pyplot as plt
     plotter = Plotter()
     dirs = [
-        'a2c_pixel_atari-181026-160814',
-        'dqn_pixel_atari-181026-160501',
-        'n_step_dqn_pixel_atari-181026-160906',
-        'option_ciritc_pixel_atari-181026-160931',
-        'ppo_pixel_atari-181028-092202',
-        'quantile_regression_dqn_pixel_atari-181026-160630',
-        'categorical_dqn_pixel_atari-181026-160743',
+        'categorical_dqn_mnist_env-190317-200450'
+        # 'a2c_pixel_atari-181026-160814',
+        # 'dqn_pixel_atari-181026-160501',
+        # 'n_step_dqn_pixel_atari-181026-160906',
+        # 'option_ciritc_pixel_atari-181026-160931',
+        # 'ppo_pixel_atari-181028-092202',
+        # 'quantile_regression_dqn_pixel_atari-181026-160630',
+        # 'categorical_dqn_pixel_atari-181026-160743',
     ]
     names = [
-        'A2C',
-        'DQN',
-        'NStepDQN',
-        'OptionCritic',
-        'PPO',
-        'QRDQN',
-        'C51'
+        'DQN MNIST'
+        # 'A2C',
+        # 'DQN',
+        # 'NStepDQN',
+        # 'OptionCritic',
+        # 'PPO',
+        # 'QRDQN',
+        # 'C51'
     ]
 
     plt.figure(0)
     for i, dir in enumerate(dirs):
-        data = plotter.load_results(['./data/benchmark/%s' % (dir)], episode_window=100)
+        data = plotter.load_results(['log/%s' % (dir)], episode_window=100)
         x, y = data[0]
         plt.plot(x, y, label=names[i])
     plt.xlabel('steps')
     plt.ylabel('episode return')
     plt.legend()
-    plt.savefig('./images/breakout.png')
+    plt.savefig('images/mnist_dqn.png')
 
 if __name__ == '__main__':
     mkdir('log')
