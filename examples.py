@@ -164,7 +164,7 @@ def categorical_dqn_mnist_env():
     config.async_actor = False
 
     config.eval_interval = int(5e3)
-    config.max_steps = 1e5
+    config.max_steps = 1e6
     config.logger = get_logger(tag=categorical_dqn_mnist_env.__name__)
     run_steps(CategoricalDQNAgent(config))
 
@@ -217,7 +217,7 @@ def a2c_mnist_env():
     game = 'MNISTEnv'
     config = Config()
     log_dir = get_default_log_dir(a2c_mnist_env.__name__)
-    config.num_workers = 5
+    config.num_workers = 1
     config.task_fn = lambda: Task(game, num_envs=config.num_workers, log_dir=log_dir)
     config.eval_env = Task(game, type='test')
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
@@ -228,7 +228,7 @@ def a2c_mnist_env():
     config.entropy_weight = 0.01
     config.rollout_length = 16
     config.log_interval = 128 * 5 * 10
-    config.max_steps = int(1e5)
+    config.max_steps = int(1e6)
     config.gradient_clip = 5
     config.logger = get_logger(tag=a2c_mnist_env.__name__)
     run_steps(A2CAgent(config))
@@ -378,7 +378,7 @@ def ppo_mnist_env():
     game = 'MNISTEnv'
     config = Config()
     log_dir = get_default_log_dir(ppo_mnist_env.__name__)
-    config.num_workers = 5
+    config.num_workers = 1
     config.task_fn = lambda: Task(game, num_envs=config.num_workers, log_dir=log_dir)
     config.eval_env = Task(game, type='test')
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
@@ -476,7 +476,9 @@ def plot():
     import matplotlib.pyplot as plt
     plotter = Plotter()
     dirs = [
-        'categorical_dqn_mnist_env-190317-200450'
+        'categorical_dqn_mnist_env-190318-102337',
+        'ppo_mnist_env-190318-102352',
+        'a2c_mnist_env-190318-102408'
         # 'a2c_pixel_atari-181026-160814',
         # 'dqn_pixel_atari-181026-160501',
         # 'n_step_dqn_pixel_atari-181026-160906',
@@ -486,7 +488,9 @@ def plot():
         # 'categorical_dqn_pixel_atari-181026-160743',
     ]
     names = [
-        'DQN MNIST'
+        'DQN',
+        'PPO',
+        'A2C'
         # 'A2C',
         # 'DQN',
         # 'NStepDQN',
@@ -504,7 +508,7 @@ def plot():
     plt.xlabel('steps')
     plt.ylabel('episode return')
     plt.legend()
-    plt.savefig('images/mnist_dqn.png')
+    plt.savefig('images/mnist_dqn_ppo_a2c_1mil.png')
 
 if __name__ == '__main__':
     mkdir('log')
