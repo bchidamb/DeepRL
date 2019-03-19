@@ -118,3 +118,40 @@ class MNISTBody(nn.Module):
         x = self.lin1(x)
         
         return x
+        
+class MNISTBodyPaper(nn.Module):
+    '''
+    A CNN with ReLU activations. Replicates MNIST architecture from
+        https://arxiv.org/pdf/1811.06032.pdf
+    
+    Input shape:    (batch_size, 28, 28)
+    Output shape:   (batch_size, 50)
+    '''
+    
+    def __init__(self):
+        
+        super(MNISTBodyPaper, self).__init__()
+        
+        self.conv1 = nn.Conv2d(1, 10, 5, stride=2, padding=2)
+        self.conv2 = nn.Conv2d(10, 20, 5)
+        self.conv3 = nn.Conv2d(20, 10, 5)
+        self.lin1  = nn.Linear(360, 512)
+        self.feature_dim = 512
+    
+    def forward(self, x):
+    
+        x = x[:, None, :, :]
+    
+        x = self.conv1(x)
+        x = F.relu(x)
+        
+        x = self.conv2(x)
+        x = F.relu(x)
+        
+        x = self.conv3(x)
+        x = F.relu(x)
+        
+        x = x.view(-1, 360)
+        x = self.lin1(x)
+        
+        return x

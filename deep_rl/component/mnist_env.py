@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 MAX_STEPS = 20
 WINDOW_SIZE = 7
 RANDOM_LOC = False
+NOISE = 0 # st.dev of Normal noise, choose from [0, 0.01, 0.1, 0.5]
+VARY_COLOR = False # whether to change bg color, choose from [True, False]
 
 '''
 Notes:
@@ -56,7 +58,7 @@ class MNISTEnv(gym.Env):
         # action is an integer in {0, ..., 39}
         # see 'step' for interpretation
         self.action_space = spaces.Discrete(40)
-        self.observation_space = spaces.Box(0, 255, [h, w])
+        self.observation_space = spaces.Box(-1, 1, [h, w])
         
     # function needed for deep_rl library
     def seed(self, seed):
@@ -117,7 +119,11 @@ class MNISTEnv(gym.Env):
         return self._get_obs()
         
     def _get_obs(self):
-        obs = self.X[self.i] * self.mask / 255
+        obs = self.X[self.i] * self.mask / 255 # - (1 - self.mask)
+        if VARY_COLOR:
+            obs[obs == 0] = np.random.uniform(0, 0.5)
+        obs = obs + np.random.normal(0.0, NOISE, obs.shape)
+        obs = np.clip(obs, -1, 1)
         assert self.observation_space.contains(obs)
         return obs
         
@@ -140,6 +146,6 @@ class MNISTEnv(gym.Env):
         plt.subplot(132)
         plt.imshow(self.X[self.i])
         plt.subplot(133)
-        plt.imshow(self.X[self.i] * self.mask)
+        plt.imshow(self._get_obs())
         
         plt.show()

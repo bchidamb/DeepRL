@@ -223,7 +223,7 @@ def a2c_mnist_env():
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
     config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
     config.discount = 0.8
-    config.use_gae = False
+    config.use_gae = True
     config.gae_tau = 0.95
     config.entropy_weight = 0.01
     config.rollout_length = 16
@@ -384,7 +384,7 @@ def ppo_mnist_env():
     config.optimizer_fn = lambda params: torch.optim.Adam(params)
     config.network_fn = lambda: CategoricalActorCriticNet(config.state_dim, config.action_dim, MNISTBody())
     config.discount = 0.8
-    config.use_gae = False
+    config.use_gae = True
     config.gae_tau = 0.95
     config.entropy_weight = 0.01
     config.gradient_clip = 5
